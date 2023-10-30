@@ -1,74 +1,66 @@
-const UserModel = require('../models/User')
-const bcrypt = require('bcrypt');
-const cloudinary = require('cloudinary').v2;
+const UserModel = require("../models/User");
+const bcrypt = require("bcrypt");
+const cloudinary = require("cloudinary").v2;
 
 cloudinary.config({
-       cloud_name: 'dzqhnuroo',
-       api_key: '434622187235975',
-       api_secret: 'Q5hut4Hs9Xth4FtfghjpwG4T3Sw'
-      
+  cloud_name: "ddc3epubs",
+  api_key: "433914787825219",
+  api_secret: "J0gZRtPMMvc70LUC9QNTlgpBNjI",
 });
 
 class UserController {
-       static getalluser = async (req, res) => {
-              try {
-                     res.send('hello user')
-              } catch (error) {
-                     console.log('error')
-              }
+  static getalluser = async (req, res) => {
+    try {
+      res.send("hello user");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-       }
-
-       static userinsert = async (req, res) => {
-              const { name, email, password,confirmpassword } = req.body
-              const image = req.files.image
-              const image_upload = await cloudinary.uploader.upload(image.tempFilePath, {
-                     folder: 'Profile Imageapi'
-              })
-              //     console.log(image_upload)
-
-              const user = await UserModel.findOne({ email: email })
-              if (user) {
-                     res
-                            .status(401)
-                            .json({ status: "failed", message: "THIS EMAIL ALREADY EXITS" });
-              } else {
-                     if (name && email && password && confirmpassword) {
-                            if (password == confirmpassword) {
-                                   try {
-
-                                          const hashpassword = await bcrypt.hash(password, 10)
-                                          const result = new UserModel({
-                                                 name: name,
-                                                 email: email,
-                                                 password: hashpassword,
-                                                 image: {
-                                                        public_id: image_upload.public_id,
-                                                        url: image_upload.secure_url,
-                                                 },
-                                          })
-
-                                          await result.save();
-                                          res.status(201).json({
-                                                 status: "success",
-                                                 message: "Registration Successfully",
-                                          });
-                                   } catch (error) {
-                                          console.log(error)
-                                   }
-                            } else {
-                                   res
-                                          .status(401)
-                                          .json({ status: "failed", message: "PASSWORD & CONFIRMPASSWORD DONES NOT MATCH" });
-                            }
-
-
-                     } else {
-                            req.flash('error', 'all feild are required')
-                            res.redirect('/register')
-                     }
-              }
-       }
+  static userinsert = async (req, res) => {
+    try {
+      // console.log(req.files.image)
+      // console.log(req.body)
+      const file = req.files.image;
+      // image upload code
+      const image_upload = await cloudinary.uploader.upload(file.tempFilePath, {
+        folder: "profile Image api",
+      });
+      // console.log(image_upload)
+      const { name, email, password, course } = req.body;
+      const user = await UserModel.findOne({ email: email });
+      if (user) {
+        res
+          .status(401)
+          .json({ status: "success", message: "THIS EMAIL IS ALREADY EXISTS" });
+      } else {
+        if (name && email && password) {
+          const hashpassword = await bcrypt.hash(password, 10);
+          const result = new UserModel({
+            name: name,
+            email: email,
+            password: hashpassword,
+            course: course,
+            image: {
+              public_id: image_upload.public_id,
+              url: image_upload.secure_url,
+            },
+          });
+          await result.save();
+          res.status(201).json({
+            status: "success",
+            message: "Registration Successfully",
+          });
+        } else {
+          res
+            .status(401)
+            .json({ status: "failed", message: "ALL FIELD REQUIRED" });
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 }
 
-module.exports = UserController
+module.exports = UserController;
