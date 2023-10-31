@@ -1,6 +1,8 @@
 const UserModel = require("../models/User");
 const bcrypt = require("bcrypt");
+const jwt = require('jsonwebtoken');
 const cloudinary = require("cloudinary").v2;
+
 
 cloudinary.config({
   cloud_name: "ddc3epubs",
@@ -9,13 +11,20 @@ cloudinary.config({
 });
 
 class UserController {
-  static getalluser = async (req, res) => {
-    try {
-      res.send("hello user");
-    } catch (error) {
-      console.log(error);
-    }
-  };
+       static getalluser = async (req, res) => {
+              try {
+                  const users = await UserModel.find()
+                  // console.log(user)
+                  res.status(201).json({
+                      status: 'success',
+                      message: 'successfull',
+                      users,
+                    })
+                  // res.send('hello user')
+              } catch (error) {
+                  console.log(error);
+              }
+          }
 
   static userinsert = async (req, res) => {
     try {
@@ -61,6 +70,68 @@ class UserController {
       console.log(error);
     }
   };
+
+  static getuserdetails = async (req, res) => {
+       try {
+           const {id, name, email} = req.data1
+           const user = await UserModel.findById(id)
+           // console.log(user)
+           res.status(201).json({
+               status: 'success',
+               message: 'successfull',
+               user,
+             })
+           res.send('hello user')
+       } catch (error) {
+           console.log(error);
+       }
+   }
+
+
+   static verifylogin = async (req, res) => {
+       try {
+           const { email, password } = req.body;
+           if (email && password) {
+               const user = await UserModel.findOne({ email: email })
+
+               if (user != null) {
+                   const isMatched = await bcrypt.compare(password, user.password)
+                   if (isMatched) {
+                       const token = jwt.sign({ ID: user._id }, 'nitin123456uprety');
+                       // console.log(token)
+                       res.cookie('token', token)
+                       res.status(201).json({
+                           status: 'success',
+                           message: 'successful',
+                           token: token,
+                           user,
+                       })
+                   } else {
+                       res
+                           .status(401)
+                           .json({ status: "failed", message: "email or password is not valid" });
+                   }
+               } else {
+                   res
+                       .status(401)
+                       .json({ status: "failed", message: "you are not register user" });
+               }
+           } else {
+               res
+                   .status(401)
+                   .json({ status: "failed", message: "all field required" });
+           }
+       } catch (err) {
+           console.log(err);
+       }
+   }
+
+
+
+
+
+
+
 }
 
 module.exports = UserController;
